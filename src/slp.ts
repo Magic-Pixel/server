@@ -63,7 +63,7 @@ export function performDepositResolution(
           "sort": {
             "blk.i": -1
           },
-          "limit": 10
+          "limit": 10000
         }
       };
 
