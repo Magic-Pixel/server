@@ -91,6 +91,10 @@ app.post('/api/command/minecraft', (req: any, res) => {
           }
         }
 
+        if (msg === '') {
+          msg = `You don't have any tokens\nTry "/mpx deposit"`;
+        }
+
         return res.json({
           msg
         });
