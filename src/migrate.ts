@@ -90,25 +90,24 @@ const db = pgp(config.connString());
     CREATE TABLE IF NOT EXISTS tokens (
       id VARCHAR(64) NOT NULL PRIMARY KEY,
       name VARCHAR(200) NOT NULL,
+      decimals INTEGER NOT NULL,
       ts TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
   await db.none(`
     INSERT INTO tokens (
-      id,
-      name
+      id, name, decimals
     ) VALUES (
       '4de69e374a8ed21cbddd47f2338cc0f479dc58daa2bbe11cd604ca488eca0ddf',
-      'spice'
+      'spice', 8
     )
   `);
   await db.none(`
     INSERT INTO tokens (
-      id,
-      name
+      id, name, decimals
     ) VALUES (
       '7f8889682d57369ed0e32336f8b7e0ffec625a35cca183f4e81fde4e71a538a1',
-      'honk'
+      'honk', 0
     )
   `);
 
