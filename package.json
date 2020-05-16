@@ -34,7 +34,8 @@
     "node-pg-migrate": "^4.8.0",
     "pg-promise": "^10.5.5",
     "slpjs": "^0.27.2",
-    "vuepress": "^1.5.0"
+    "vuepress": "^1.5.0",
+    "yggdrasil": "^1.3.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

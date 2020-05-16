@@ -116,18 +116,20 @@ export interface TransferResult {
 export interface Token {
   id: string;
   name: string;
+  decimals: number;
 }
 
 export function getTokenByName(tokenName: string): Promise<Token|null> {
   return new Promise((resolve, reject) => {
-    db.any(`SELECT id, name
+    db.any(`SELECT id, name, decimals
             FROM tokens
             WHERE name=$1`, [tokenName])
     .then((data) => {
       if (data !== null && data.length === 1) {
         return resolve({
-          id:     data[0].id,
-          name:   data[0].name,
+          id:       data[0].id,
+          name:     data[0].name,
+          decimals: data[0].decimals,
         });
       } else {
         return resolve(null);
@@ -138,14 +140,15 @@ export function getTokenByName(tokenName: string): Promise<Token|null> {
 
 export function getTokenById(tokenId: string): Promise<Token|null> {
   return new Promise((resolve, reject) => {
-    db.any(`SELECT id, name
+    db.any(`SELECT id, name, decimals
             FROM tokens
             WHERE id=$1`, [tokenId])
     .then((data) => {
       if (data !== null && data.length === 1) {
         return resolve({
-          id:     data[0].id,
-          name:   data[0].name,
+          id:       data[0].id,
+          name:     data[0].name,
+          decimals: data[0].decimals,
         });
       } else {
         return resolve(null);
@@ -160,8 +163,9 @@ export function getAllTokens(): Promise<Token[]> {
             FROM tokens`)
     .then((data) => {
       return resolve(data.map(d => ({
-        id:     d.id,
-        name:   d.name,
+        id:       d.id,
+        name:     d.name,
+        decimals: d.decimals,
       })));
     });
   });
