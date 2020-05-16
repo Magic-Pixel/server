@@ -21,7 +21,8 @@ app.get('/', (req: any, res) => {
 
 const helpText = (): string => `Magic Pixel | magicpixel.xyz
 /mpx balance [token?]
-/mpx send [username] [amount] [token?]`;
+/mpx send [username] [amount] [token?]
+/mpx deposit`;
 
 function getBalances(serverId: number, uuid: string): Promise<Map<string, BigNumber>> {
   return new Promise((resolve, reject) => {
@@ -171,6 +172,37 @@ app.post('/api/command/minecraft', (req: any, res) => {
               });
             }
           })
+        });
+      });
+    }
+    else if ((cmd[0] === 'd' || cmd[0] === 'deposit') &&
+             (cmd.length === 1)
+    ) {
+      console.log(cmd);
+      db.getOrCreateUserId(serverData.id, uuid)
+      .then((userId) => {
+        slp.performDepositResolution(serverData.id, userId)
+        .then((deposited) => {
+          console.log('deposited', deposited);
+          if (deposited) {
+            db.getAllTokenBalances(userId)
+            .then((balances) => {
+              console.log('balances', balances);
+              let msg = "Deposit received\n";
+
+              for (const [k, v] of balances) {
+                msg += `${v} ${k}\n`;
+              }
+
+              return res.json({
+                msg
+              });
+            });
+          } else {
+            return res.json({
+              msg: 'No deposits found\nGo to magicpixel.xyz/deposit'
+            });
+          }
         });
       });
     }

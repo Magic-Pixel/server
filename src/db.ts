@@ -273,3 +273,73 @@ export function transfer(
     })
   });
 }
+
+export interface Deposit {
+  id: number;
+  user_id: number;
+  txid: string;
+  token_id: string;
+  server_id: number;
+  amount: BigNumber;
+}
+
+export function getLatestDeposits(serverId: number, userId: number): Promise<Deposit[]> {
+  return new Promise((resolve, reject) => {
+    db.any(`SELECT id, user_id, txid, token_id, server_id, amount
+            FROM deposits
+            WHERE user_id=$1
+              AND server_id=$2
+            ORDER BY ts DESC
+            LIMIT 1000`,
+    [userId, serverId])
+    .then((data) => {
+      return resolve(data.map(d => ({
+        id:         d.id,
+        user_id:    d.user_id,
+        txid:       d.txid,
+        token_id:   d.token_id,
+        server_id:  d.server_id,
+        amount:     new BigNumber(d.amount)
+      })));
+    });
+  });
+}
+
+export function depositSlp(
+  serverId: number,
+  userId: number,
+  txid: string,
+  token: Token,
+  amount: BigNumber
+): Promise<TransferResult> {
+  return new Promise((resolve, reject) => {
+    db.tx(async (t) => {
+      console.log(await getAllTokenBalances(userId));
+      const balance: BigNumber = getTokenBalance(await getAllTokenBalances(userId), token.name);
+      const newBalance: BigNumber = balance.plus(amount);
+
+      await t.none(`UPDATE users
+                    SET balances = balances || '{"${token.name}": "${newBalance.toString()}"}'
+                    WHERE id=$1`, [userId]);
+
+      await t.none(`INSERT INTO deposits (
+                      user_id,
+                      txid,
+                      token_id,
+                      server_id,
+                      amount
+                    ) VALUES ($1, $2, $3, $4, $5::numeric)`, [
+        userId,
+        txid,
+        token.id,
+        serverId,
+        amount.toString()
+      ]);
+
+      return resolve({
+        success: true,
+        errorMsg: null
+      });
+    })
+  });
+}
