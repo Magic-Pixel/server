@@ -28,14 +28,6 @@ const db = pgp(config.connString());
   await db.any(`CREATE INDEX IF NOT EXISTS users_game_username_idx ON users (game_username);`);
   await db.any(`CREATE INDEX IF NOT EXISTS users_server_id_idx ON users (server_id);`);
 
-  await db.none(`INSERT INTO users (
-              game,
-              game_username,
-              server_id,
-              balances
-            ) VALUES ('minecraft', 'c25d4086b30143cb838e62802aa61ad8', 1, '{ "spice": "100" }')`);
-
-
   await db.any(`
     CREATE TABLE IF NOT EXISTS transfers (
       id SERIAL PRIMARY KEY,
