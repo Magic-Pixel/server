@@ -1,8 +1,11 @@
 import fetch, {Response} from "node-fetch";
 import NodeCache from "node-cache";
+import * as db from "./db";
+const ygg = require('yggdrasil')();// tslint:disable-line
 
 const uuidCache     = new NodeCache(); // username -> uuid
 const usernameCache = new NodeCache(); // uuid -> username
+const authCache     = new NodeCache(); // access-token - > uuid
 
 interface MojangUuidLookupResponse {
     name: string;
@@ -61,6 +64,40 @@ export function lookupMinecraftUuid(username: string): Promise<string|null> {
     .catch((e) => {
       console.error(e);
       resolve(null);
+    });
+  });
+}
+
+interface AuthenticationResponse {
+  accessToken: string;
+  clientToken: string;
+  profileId: string;
+  profileName: string;
+}
+
+export function authenticate(username: string, password: string): Promise<AuthenticationResponse|null> {
+  return new Promise((resolve, reject) => {
+    ygg.auth({
+      user: username,
+      pass: password
+    }, (err: any, data: any) => {
+      if (err !== null) {
+        return resolve(null);
+      }
+
+      const accessToken = data.accessToken;
+      const clientToken = data.clientToken;
+      const profileId = data.selectedProfile.id;
+      const profileName = data.selectedProfile.name;
+
+      authCache.set(accessToken, profileId);
+
+      return resolve({
+        accessToken,
+        clientToken,
+        profileId,
+        profileName
+      });
     });
   });
 }
