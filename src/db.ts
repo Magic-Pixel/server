@@ -226,8 +226,11 @@ export function transfer(
   token: Token,
   amount: BigNumber
 ): Promise<TransferResult> {
-  return new Promise((resolve, reject) => {
-    db.tx(async (t) => {
+  return new Promise(async (resolve, reject) => {
+    // TODO fix this crappy setup
+    let err = false;
+
+    await db.tx(async (t) => {
       console.log(await getAllTokenBalances(sendUserId));
       console.log(await getAllTokenBalances(recvUserId));
       const sendBalance: BigNumber = getTokenBalance(await getAllTokenBalances(sendUserId), token.name);
@@ -236,6 +239,7 @@ export function transfer(
       const newRecvBalance: BigNumber = recvBalance.plus(amount);
 
       if (newSendBalance.isLessThan(new BigNumber(0))) {
+        err = true;
         return resolve({
           success: false,
           errorMsg: sendBalance.isLessThanOrEqualTo(new BigNumber(0))
@@ -266,10 +270,12 @@ export function transfer(
         amount.toString()
       ]);
 
-      return resolve({
-        success: true,
-        errorMsg: null
-      });
+      if (! err) {
+        return resolve({
+          success: true,
+          errorMsg: null
+        });
+      }
     })
   });
 }
@@ -312,8 +318,8 @@ export function depositSlp(
   token: Token,
   amount: BigNumber
 ): Promise<TransferResult> {
-  return new Promise((resolve, reject) => {
-    db.tx(async (t) => {
+  return new Promise(async (resolve, reject) => {
+    await db.tx(async (t) => {
       console.log(await getAllTokenBalances(userId));
       const balance: BigNumber = getTokenBalance(await getAllTokenBalances(userId), token.name);
       const newBalance: BigNumber = balance.plus(amount);
@@ -335,11 +341,11 @@ export function depositSlp(
         serverId,
         amount.toString()
       ]);
+    });
 
-      return resolve({
-        success: true,
-        errorMsg: null
-      });
-    })
+    return resolve({
+      success: true,
+      errorMsg: null
+    });
   });
 }
