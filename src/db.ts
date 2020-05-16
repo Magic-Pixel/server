@@ -227,56 +227,55 @@ export function transfer(
   amount: BigNumber
 ): Promise<TransferResult> {
   return new Promise(async (resolve, reject) => {
-    // TODO fix this crappy setup
-    let err = false;
+    try {
+      await db.tx(async (t) => {
+        console.log(await getAllTokenBalances(sendUserId));
+        console.log(await getAllTokenBalances(recvUserId));
+        const sendBalance: BigNumber = getTokenBalance(await getAllTokenBalances(sendUserId), token.name);
+        const recvBalance: BigNumber = getTokenBalance(await getAllTokenBalances(recvUserId), token.name);
+        const newSendBalance: BigNumber = sendBalance.minus(amount);
+        const newRecvBalance: BigNumber = recvBalance.plus(amount);
 
-    await db.tx(async (t) => {
-      console.log(await getAllTokenBalances(sendUserId));
-      console.log(await getAllTokenBalances(recvUserId));
-      const sendBalance: BigNumber = getTokenBalance(await getAllTokenBalances(sendUserId), token.name);
-      const recvBalance: BigNumber = getTokenBalance(await getAllTokenBalances(recvUserId), token.name);
-      const newSendBalance: BigNumber = sendBalance.minus(amount);
-      const newRecvBalance: BigNumber = recvBalance.plus(amount);
-
-      if (newSendBalance.isLessThan(new BigNumber(0))) {
-        err = true;
-        return resolve({
-          success: false,
-          errorMsg: sendBalance.isLessThanOrEqualTo(new BigNumber(0))
+        if (newSendBalance.isLessThan(new BigNumber(0))) {
+          throw new Error(sendBalance.isLessThanOrEqualTo(new BigNumber(0))
             ? `You don't have any ${token.name}`
             : `You only have ${sendBalance.toString()} ${token.name}`
-        });
-      }
+          );
+        }
 
-      await t.none(`UPDATE users
-                    SET balances = balances || '{"${token.name}": "${newSendBalance.toString()}"}'
-                    WHERE id=$1`, [sendUserId]);
+        await t.none(`UPDATE users
+                      SET balances = balances || '{"${token.name}": "${newSendBalance.toString()}"}'
+                      WHERE id=$1`, [sendUserId]);
 
-      await t.none(`UPDATE users
-                    SET balances = balances || '{"${token.name}": "${newRecvBalance.toString()}"}'
-                    WHERE id=$1`, [recvUserId]);
+        await t.none(`UPDATE users
+                      SET balances = balances || '{"${token.name}": "${newRecvBalance.toString()}"}'
+                      WHERE id=$1`, [recvUserId]);
 
-      await t.none(`INSERT INTO transfers (
-                      send_user_id,
-                      recv_user_id,
-                      token_id,
-                      server_id,
-                      amount
-                    ) VALUES ($1, $2, $3, $4, $5::numeric)`, [
-        sendUserId,
-        recvUserId,
-        token.id,
-        serverId,
-        amount.toString()
-      ]);
+        await t.none(`INSERT INTO transfers (
+                        send_user_id,
+                        recv_user_id,
+                        token_id,
+                        server_id,
+                        amount
+                      ) VALUES ($1, $2, $3, $4, $5::numeric)`, [
+          sendUserId,
+          recvUserId,
+          token.id,
+          serverId,
+          amount.toString()
+        ]);
+      });
 
-      if (! err) {
-        return resolve({
-          success: true,
-          errorMsg: null
-        });
-      }
-    })
+      return resolve({
+        success: true,
+        errorMsg: null
+      });
+    } catch (e) {
+      return resolve({
+        success: false,
+        errorMsg: e.message
+      });
+    }
   });
 }
 
