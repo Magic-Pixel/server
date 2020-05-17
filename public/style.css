@@ -92,7 +92,7 @@ button {
 button:hover {
   cursor: pointer;
 }
-#deposit-received {
+.popup {
   position: fixed;
   top: 5vh;
   left: 3vw;
@@ -104,12 +104,12 @@ button:hover {
   box-shadow: 3px 3px 10px #1b1b1b;
   display:none;
 }
-#deposit-received h1 {
+.popup h1 {
   color: #212121;
   font-weight: bold;
   text-shadow: 0px 0px 0px #424242;
 }
-#deposit-received h2 {
+.popup h2 {
   color: #313131;
   font-weight: bold;
   text-shadow: 0px 0px 0px #424242;

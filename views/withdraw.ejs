@@ -22,6 +22,10 @@
         <br>
         <button type="submit" id="withdraw-button">Withdraw</button>
       </div>
+      <div id="withdraw-success" class="popup">
+        <h1>Withdraw Received</h1>
+        <h2>Have fun!</h2>
+      </div>
     </div>
 
     <script src="https://unpkg.com/jquery@3.3.1/dist/jquery.min.js"></script>
@@ -78,6 +82,7 @@
             }
             console.log(tokenId);
 
+            $(this).prop('disabled', true);
             fetch('/api/minecraft/withdraw', {
               method: 'post',
               headers: {
@@ -97,7 +102,14 @@
               return res.json();
             })
             .then(function(withdrawResponse) {
-              console.log(withdrawResponse);
+              if (withdrawResponse.success) {
+                window.open('https://simpleledger.info/#tx/'+withdrawResponse.txid, '_blank')
+              }
+              $('#withdraw-success').show();
+              $('#withdraw-success').click(function() {
+                $(this).hide();
+                location.reload();
+              });
             });
           });
         });
