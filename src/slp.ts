@@ -140,14 +140,13 @@ const network = new slpjs.BchdNetwork({BITBOX, client, validator, logger});
 export function withdraw(
   serverId: number,
   userId: number,
-  tokenId: string,
+  token: db.Token,
   address: string,
   amount: BigNumber
-): Promise<boolean> {
+): Promise<string|null> {
   return new Promise(async (resolve, reject) => {
-    const token = await db.getTokenById(tokenId);
-    if (token === null) {
-      return resolve(false);
+    if (! slpjs.Utils.isSlpAddress(address)) {
+      return resolve(null);
     }
 
     const fundingAddress           = config.fundingAddress();     // <-- must be simpleledger format
@@ -158,12 +157,12 @@ export function withdraw(
     const sendAmounts: BigNumber[] = [ amount.times(10**tokenDecimals) ];
 
     const balances = await network.getAllSlpBalancesAndUtxos(fundingAddress) as slpjs.SlpBalancesResult;
-    if(balances.slpTokenBalances[tokenId] === undefined) {
+    if(balances.slpTokenBalances[token.id] === undefined) {
       console.error('error', 'out_of_funds');
-      return; // TODO error
+      return resolve(null);
     }
 
-    const inputUtxos = balances.slpTokenUtxos[tokenId].concat(balances.nonSlpUtxos);
+    const inputUtxos = balances.slpTokenUtxos[token.id].concat(balances.nonSlpUtxos);
     inputUtxos.forEach(txo => txo.wif = fundingWif);
 
     const requiredNonTokenOutputs = [{
@@ -172,7 +171,7 @@ export function withdraw(
     }];
 
     console.log('withdraw', {
-      tokenId,
+      tokenId: token.id,
       sendAmounts,
       inputUtxos,
       tokenReceiverAddress,
@@ -183,7 +182,7 @@ export function withdraw(
     let txid = null;
     try {
       txid = await network.simpleTokenSend(
-        tokenId,
+        token.id,
         sendAmounts,
         inputUtxos,
         tokenReceiverAddress,
@@ -192,12 +191,9 @@ export function withdraw(
       );
     } catch (e) {
       console.log('send_error', e);
-      // process.exit(1);
+      return resolve(null);
     }
 
-    // db.withdraw();
-
-
-    return resolve(true);
+    return resolve(txid);
   });
 }

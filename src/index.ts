@@ -10,6 +10,7 @@ const app = express();
 
 app.enable('trust proxy');
 
+app.use(express.json())
 app.use(express.static('public'));
 app.set("views", path.join( __dirname, "../views" ));
 app.set("view engine", "ejs");
@@ -19,20 +20,101 @@ app.get('/', (req: any, res) => {
   res.render("index");
 });
 
+app.get('/deposit', (req: any, res) => {
+  res.render("deposit");
+});
+
+app.get('/withdraw', (req: any, res) => {
+  res.render("withdraw");
+});
+
+app.post('/api/minecraft/authenticate', async (req: any, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const serverId = req.body.serverId;
+
+  const authResponse = await mojang.authenticate(email, password);
+  if (authResponse === null) {
+    return res.json({
+      success: false,
+      msg: "couldn't authenticate with mojang"
+    });
+  }
+
+  const userId = await db.getUserId(serverId, authResponse.profileId);
+  if (userId === null) {
+    return res.json({
+      success: false,
+      msg: "not on this server"
+    });
+  }
+
+  const balances = await db.getAllTokenBalances(userId);
+  console.log(balances);
+
+  const balObj: any = {};
+  for (const prop of balances) {
+    balObj[prop[0]] = prop[1].toString();
+  }
+
+  return res.json({
+    sucess: true,
+    auth: authResponse,
+    balances: balObj
+  });
+});
+
+app.post('/api/minecraft/withdraw', async (req: any, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const address = req.body.address;
+  const serverId = parseInt(req.body.serverId, 10);
+  const amount = new BigNumber(req.body.amount);
+  const tokenId = req.body.tokenId;
+
+  const authResponse = await mojang.authenticate(email, password)
+  if (authResponse === null) {
+    return res.json({
+      success: false,
+      msg: "couldn't authenticate with mojang"
+    });
+  }
+
+  const userId = await db.getUserId(serverId, authResponse.profileId)
+  if (userId === null) {
+    return res.json({
+      success: false,
+      msg: "not on this server"
+    });
+  }
+
+  const token = await db.getTokenById(tokenId);
+  if (token === null) {
+    return res.json({
+      success: false,
+      msg: "token not found"
+    });
+  }
+
+  const txid = await db.withdrawSlp(serverId, userId, token, address, amount);
+
+  return res.json({
+    success: txid !== null,
+    txid,
+  });
+});
+
+
 const helpText = (): string => `Magic Pixel | magicpixel.xyz
 /mpx balance [token?]
 /mpx send [username] [amount] [token?]
 /mpx deposit`;
 
 function getBalances(serverId: number, uuid: string): Promise<Map<string, BigNumber>> {
-  return new Promise((resolve, reject) => {
-    db.getOrCreateUserId(serverId, uuid)
-    .then((userId) => {
-      db.getAllTokenBalances(userId)
-      .then((balances) => {
-        resolve(balances);
-      });
-    });
+  return new Promise(async (resolve, reject) => {
+    const userId = await db.getOrCreateUserId(serverId, uuid);
+    const balances = await db.getAllTokenBalances(userId);
+    return balances;
   });
 }
 
@@ -353,10 +435,6 @@ app.get('/api/deposit/minecraft', (req: any, res) => {
     }
   }
   return res.json(ret);
-});
-
-app.get('/deposit', (req: any, res) => {
-  res.render("deposit");
 });
 
 app.get('/api/deposit/minecraft/:uuid', (req: any, res) => {

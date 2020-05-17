@@ -1,6 +1,7 @@
 import pgPromise from "pg-promise";
 import {BigNumber} from "bignumber.js";
 import * as config from "./config";
+import * as slp from "./slp";
 
 
 const pgp = pgPromise();
@@ -349,6 +350,51 @@ export function depositSlp(
     return resolve({
       success: true,
       errorMsg: null
+    });
+  });
+}
+
+export function withdrawSlp(
+  serverId: number,
+  userId: number,
+  token: Token,
+  address: string,
+  amount: BigNumber
+): Promise<string|null>  {
+  return new Promise(async (resolve, reject) => {
+    await db.tx(async (t) => {
+      const balance: BigNumber = getTokenBalance(await getAllTokenBalances(userId), token.name);
+      if (amount.isGreaterThan(balance)) {
+        return null;
+      }
+      const newBalance: BigNumber = balance.minus(amount);
+
+      const txid = await slp.withdraw(serverId, userId, token, address, amount);
+      if (txid === null) {
+        return resolve(null);
+      }
+
+      await t.none(`UPDATE users
+                    SET balances = balances || '{"${token.name}": "${newBalance.toString()}"}'
+                    WHERE id=$1`, [userId]);
+
+      await t.none(`INSERT INTO withdraws (
+                      user_id,
+                      txid,
+                      token_id,
+                      server_id,
+                      amount,
+                      address
+                    ) VALUES ($1, $2, $3, $4, $5::numeric, $6)`, [
+        userId,
+        txid,
+        token.id,
+        serverId,
+        amount.toString(),
+        address,
+      ]);
+
+      return resolve(txid);
     });
   });
 }

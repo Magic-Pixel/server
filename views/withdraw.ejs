@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Withdraw</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cabin&display=swap" rel="stylesheet">
+    <link rel="stylesheet" media="screen" href="/style.css">
+  </head>
+  <body>
+    <div id="container">
+      <h1>Withdraw</h1>
+      <input type="text" id="minecraft_email" value="">
+      <input type="password" id="minecraft_password" value="">
+
+      <div id="tokens"></div>
+      <div id="servers"></div>
+
+      <div id="hidden-until-login">
+        <input type="text" id="withdraw_address" value="simpleledger:qrnctwplm7h9n2g8httun29zx8x2jj70hs5yf7tzt9">
+        <input type="number" id="withdraw_amount" value="1">
+        <br>
+        <button type="submit" id="withdraw-button">Withdraw</button>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script src="/qrcode.min.js"></script>
+    <script>
+    $('#minecraft_password').focusout(function() {
+       fetch('/api/minecraft/authenticate', {
+         method: 'post',
+         headers: {
+           'Accept': 'application/json',
+           'Content-Type': 'application/json'
+         },
+         body: JSON.stringify({
+           email:    $('#minecraft_email').val(),
+           password: $('#minecraft_password').val(),
+           serverId: 1,
+         })
+       })
+      .then(function(res) {
+        return res.json();
+      })
+      .then(function(authResponse) {
+        console.log(authResponse);
+        fetch('/api/tokens')
+        .then(function(res) {
+          return res.json();
+        })
+        .then(function(tokensResponse) {
+          console.log(tokensResponse);
+          for (let m of tokensResponse) {
+            $(`<div class="token" style="background-image:url(https://tokens.bch.sx/original/${m.id}.png)" data-balance="${authResponse.balances[m.name] || 0}" data-id="${m.id}">
+              <span class="token-balance">Balance: ${authResponse.balances[m.name] || 0}</span>
+            </div>`)
+            .appendTo($('#tokens'));
+          }
+          $('.token').click(function() {
+            $('.token').removeClass('selected');
+            $(this).toggleClass('selected');
+          });
+          $('#hidden-until-login').show();
+          $('#withdraw-button').click(function() {
+            if ($('#tokens .token.selected').length === 0) {
+              alert('Select a token');
+              return;
+            }
+
+            const address = $('#withdraw_address').val();
+            const tokenId = $('#tokens .token.selected').data('id');
+            const amount = $('#withdraw_amount').val();
+            const balance = $('#tokens .token.selected').data('balance');
+            if (parseFloat(amount) > parseFloat(balance)) {
+              alert('Cannot withdraw more than your balance!');
+              return;
+            }
+            console.log(tokenId);
+
+            fetch('/api/minecraft/withdraw', {
+              method: 'post',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                email:    $('#minecraft_email').val(),
+                password: $('#minecraft_password').val(),
+                serverId: 1,
+                tokenId,
+                address,
+                amount,
+              })
+            })
+            .then(function(res) {
+              return res.json();
+            })
+            .then(function(withdrawResponse) {
+              console.log(withdrawResponse);
+            });
+          });
+        });
+      })
+    });
+    </script>
+  </body>
+</html>
