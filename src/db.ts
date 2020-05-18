@@ -15,8 +15,6 @@ export interface Server {
 }
 
 export function authenticateServer(password: string, ipAddress: string): Promise<Server|null> {
-  console.log(password, ipAddress);
-
   return new Promise(async (resolve, reject) => {
     const data = await db.any(`SELECT id, game, email, ip_address
                                FROM servers
@@ -214,8 +212,6 @@ export function transfer(
   return new Promise(async (resolve, reject) => {
     try {
       await db.tx(async (t) => {
-        console.log(await getAllTokenBalances(sendUserId));
-        console.log(await getAllTokenBalances(recvUserId));
         const sendBalance: BigNumber = getTokenBalance(await getAllTokenBalances(sendUserId), token.name);
         const recvBalance: BigNumber = getTokenBalance(await getAllTokenBalances(recvUserId), token.name);
         const newSendBalance: BigNumber = sendBalance.minus(amount);
@@ -304,7 +300,6 @@ export function depositSlp(
 ): Promise<TransferResult> {
   return new Promise(async (resolve, reject) => {
     await db.tx(async (t) => {
-      console.log(await getAllTokenBalances(userId));
       const balance: BigNumber = getTokenBalance(await getAllTokenBalances(userId), token.name);
       const newBalance: BigNumber = balance.plus(amount);
 

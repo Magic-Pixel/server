@@ -46,6 +46,7 @@ export function performDepositResolution(
       db.getLatestDeposits(serverId, userId),
       db.getAllTokens()
     ]);
+
     const pastDepositTxids = new Set(pastDeposits.map(d => d.txid));
     const acceptedTokens = new Map(allTokens.map(d => ([d.id, d])));
 
@@ -71,9 +72,8 @@ export function performDepositResolution(
     fetch(url)
     .then((res) => res.json())
     .then(async (data) => {
-      console.log(data);
       const newDeposits: any[] = data.c.concat(data.u);
-      const deposits = [];
+      const depositResults: any[] = [];
 
       for (const m of newDeposits) {
         const txid = m.tx.h;
@@ -95,7 +95,7 @@ export function performDepositResolution(
           }
         }
 
-        deposits.push(db.depositSlp(
+        depositResults.push(await db.depositSlp(
           serverId,
           userId,
           txid,
@@ -104,8 +104,6 @@ export function performDepositResolution(
         ));
       }
 
-      const depositResults = await Promise.all(deposits);
-      console.log('depositResults', depositResults);
       if (depositResults.length > 0) {
         return resolve(true);
       } else {
