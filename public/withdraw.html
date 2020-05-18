@@ -32,7 +32,7 @@
     <script src="/qrcode.min.js"></script>
     <script>
     $('#minecraft_password').focusout(function() {
-       fetch('/api/minecraft/authenticate', {
+       fetch('https://magicpixel.xyz/minecraft/authenticate', {
          method: 'post',
          headers: {
            'Accept': 'application/json',
@@ -49,7 +49,7 @@
       })
       .then(function(authResponse) {
         console.log(authResponse);
-        fetch('/api/tokens')
+        fetch('https://api.magicpixel.xyz/tokens')
         .then(function(res) {
           return res.json();
         })
@@ -83,7 +83,7 @@
             console.log(tokenId);
 
             $(this).prop('disabled', true);
-            fetch('/api/minecraft/withdraw', {
+            fetch('https://api.magicpixel.xyz/minecraft/withdraw', {
               method: 'post',
               headers: {
                 'Accept': 'application/json',

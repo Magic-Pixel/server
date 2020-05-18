@@ -23,7 +23,7 @@
     <script src="https://unpkg.com/jquery@3.3.1/dist/jquery.min.js"></script>
     <script src="/qrcode.min.js"></script>
     <script>
-    fetch('/api/tokens')
+    fetch('https://api.magicpixel.xyz/tokens')
     .then(function(res) {
       return res.json();
     })
@@ -36,12 +36,12 @@
     });
 
     $('#minecraft_username').focusout(function() {
-      fetch('/api/minecraft/lookup_uuid/'+$(this).val())
+      fetch('https://api.magicpixel.xyz/minecraft/lookup_uuid/'+$(this).val())
       .then(function(res) {
         return res.json();
       })
       .then(function(res) {
-        fetch('/api/deposit/minecraft/'+res.uuid)
+        fetch('https://api.magicpixel.xyz/deposit/minecraft/'+res.uuid)
         .then(function(res) {
           return res.json();
         })

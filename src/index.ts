@@ -11,7 +11,7 @@ const app = express();
 app.enable('trust proxy');
 app.use(express.json())
 
-app.post('/api/minecraft/authenticate', async (req: any, res) => {
+app.post('/minecraft/authenticate', async (req: any, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const serverId = req.body.serverId;
@@ -46,7 +46,7 @@ app.post('/api/minecraft/authenticate', async (req: any, res) => {
   });
 });
 
-app.post('/api/minecraft/withdraw', async (req: any, res) => {
+app.post('/minecraft/withdraw', async (req: any, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const address = req.body.address;
@@ -100,7 +100,7 @@ function getBalances(serverId: number, uuid: string): Promise<Map<string, BigNum
   });
 }
 
-app.post('/api/command/minecraft', async (req: any, res) => {
+app.post('/command/minecraft', async (req: any, res) => {
   const serverData = await db.authenticateServer(req.header('X-Auth-Token'), req.ip);
   if (serverData === null) {
     return res.json({
@@ -261,7 +261,7 @@ app.post('/api/command/minecraft', async (req: any, res) => {
   }
 });
 
-app.get('/api/balance/:uuid', async (req: any, res) => {
+app.get('/balance/:uuid', async (req: any, res) => {
   const serverData = await db.authenticateServer(req.header('X-Auth-Token'), req.ip);
   if (serverData === null) {
     return res.json({
@@ -282,7 +282,7 @@ app.get('/api/balance/:uuid', async (req: any, res) => {
   });
 });
 
-app.post('/api/send/:uuid1/:uuid2/:token_id/:amount', async (req: any, res) => {
+app.post('/send/:uuid1/:uuid2/:token_id/:amount', async (req: any, res) => {
   const sendUuid: string = req.params.uuid1.replace(/-/g, '');
   const recvUuid: string = req.params.uuid2.replace(/-/g, '');
   const tokenId: string = req.params.token_id;
@@ -349,12 +349,12 @@ app.post('/api/send/:uuid1/:uuid2/:token_id/:amount', async (req: any, res) => {
   }
 });
 
-app.get('/api/tokens', async (req: any, res) => {
+app.get('/tokens', async (req: any, res) => {
   const tokens = await db.getAllTokens();
   return res.json(tokens);
 });
 
-app.get('/api/servers', async (req: any, res) => {
+app.get('/servers', async (req: any, res) => {
   const servers = await db.getAllServers();
   return res.json(servers.map(t => ({
     id:         t.id,
@@ -363,14 +363,14 @@ app.get('/api/servers', async (req: any, res) => {
   })));
 });
 
-app.get('/api/minecraft/lookup_uuid/:username', async (req: any, res) => {
+app.get('/minecraft/lookup_uuid/:username', async (req: any, res) => {
   const uuid = await mojang.lookupMinecraftUuid(req.params.username);
   return res.json({
     uuid
   });
 });
 
-app.get('/api/deposit/minecraft/:uuid', async (req: any, res) => {
+app.get('/deposit/minecraft/:uuid', async (req: any, res) => {
   const uuid = req.params.uuid;
 
   const username = mojang.lookupMinecraftUsername(uuid);
@@ -392,7 +392,7 @@ app.get('/api/deposit/minecraft/:uuid', async (req: any, res) => {
   return res.json(addressPairs);
 });
 
-app.post('/api/server/transfers', async (req: any, res) => {
+app.post('/server/transfers', async (req: any, res) => {
   const serverData = await db.authenticateServer(req.header('X-Auth-Token'), req.ip);
   if (serverData === null) {
     return res.json({
