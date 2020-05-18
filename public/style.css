@@ -99,6 +99,10 @@ input {
   border: 0px;
   box-shadow: 3px 3px 10px #1b1b1b;
   margin: 1rem;
+  background-color:#fcfcfc;
+}
+input:focus {
+  background-color:#fff;
 }
 button {
   font-size: 3rem;
