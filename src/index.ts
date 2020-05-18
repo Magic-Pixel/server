@@ -9,24 +9,7 @@ import * as slp from "./slp";
 const app = express();
 
 app.enable('trust proxy');
-
 app.use(express.json())
-app.use(express.static('public'));
-app.set("views", path.join( __dirname, "../views" ));
-app.set("view engine", "ejs");
-
-
-app.get('/', (req: any, res) => {
-  res.render("index");
-});
-
-app.get('/deposit', (req: any, res) => {
-  res.render("deposit");
-});
-
-app.get('/withdraw', (req: any, res) => {
-  res.render("withdraw");
-});
 
 app.post('/api/minecraft/authenticate', async (req: any, res) => {
   const email = req.body.email;
