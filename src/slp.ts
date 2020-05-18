@@ -41,80 +41,76 @@ export function performDepositResolution(
 ): Promise<boolean> {
   const address = getAddress(serverId, userId);
 
-  return new Promise((resolve, reject) => {
-    Promise.all([
+  return new Promise(async (resolve, reject) => {
+    const [pastDeposits, allTokens] = await Promise.all([
       db.getLatestDeposits(serverId, userId),
       db.getAllTokens()
-    ])
-    .then(([pastDeposits, allTokens]) => {
-      const pastDepositTxids = new Set(pastDeposits.map(d => d.txid));
-      const acceptedTokens = new Map(allTokens.map(d => ([d.id, d])));
+    ]);
+    const pastDepositTxids = new Set(pastDeposits.map(d => d.txid));
+    const acceptedTokens = new Map(allTokens.map(d => ([d.id, d])));
 
-      const query: object = {
-        "v": 3,
-        "q": {
-          "find": {
-            "slp.detail.outputs.address": address,
-            "slp.valid": true,
-            "tx.h": {
-              "$nin": [...pastDepositTxids].slice(0, 40)
-            }
-          },
-          "sort": {
-            "blk.i": -1
-          },
-          "limit": 10000
-        }
-      };
-
-      const b64: string = btoa(JSON.stringify(query));
-      const url: string = 'https://slpdb.fountainhead.cash/q/' + b64;
-      fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-        const newDeposits: any[] = data.c.concat(data.u);
-        const deposits = [];
-
-        for (const m of newDeposits) {
-          const txid = m.tx.h;
-
-          if (pastDepositTxids.has(txid)) {
-            continue;
+    const query: object = {
+      "v": 3,
+      "q": {
+        "find": {
+          "slp.detail.outputs.address": address,
+          "slp.valid": true,
+          "tx.h": {
+            "$nin": [...pastDepositTxids].slice(0, 40)
           }
+        },
+        "sort": {
+          "blk.i": -1
+        },
+        "limit": 10000
+      }
+    };
 
-          const tokenId = m.slp.detail.tokenIdHex;
-          if (! acceptedTokens.has(tokenId)) {
-            continue;
-          }
+    const b64: string = btoa(JSON.stringify(query));
+    const url: string = 'https://slpdb.fountainhead.cash/q/' + b64;
+    fetch(url)
+    .then((res) => res.json())
+    .then(async (data) => {
+      console.log(data);
+      const newDeposits: any[] = data.c.concat(data.u);
+      const deposits = [];
 
-          let oamnt = new BigNumber(0);
+      for (const m of newDeposits) {
+        const txid = m.tx.h;
 
-          for (const o of m.slp.detail.outputs) {
-            if (o.address === address) {
-              oamnt = oamnt.plus(new BigNumber(o.amount));
-            }
-          }
-
-          deposits.push(db.depositSlp(
-            serverId,
-            userId,
-            txid,
-            acceptedTokens.get(tokenId)!,
-            oamnt
-          ));
+        if (pastDepositTxids.has(txid)) {
+          continue;
         }
 
-        Promise.all(deposits)
-        .then((depositResults) => {
-          console.log('depositResults', depositResults);
-          if (depositResults.length > 0) {
-            return resolve(true);
-          } else {
-            return resolve(false);
+        const tokenId = m.slp.detail.tokenIdHex;
+        if (! acceptedTokens.has(tokenId)) {
+          continue;
+        }
+
+        let oamnt = new BigNumber(0);
+
+        for (const o of m.slp.detail.outputs) {
+          if (o.address === address) {
+            oamnt = oamnt.plus(new BigNumber(o.amount));
           }
-        });
-      });
+        }
+
+        deposits.push(db.depositSlp(
+          serverId,
+          userId,
+          txid,
+          acceptedTokens.get(tokenId)!,
+          oamnt
+        ));
+      }
+
+      const depositResults = await Promise.all(deposits);
+      console.log('depositResults', depositResults);
+      if (depositResults.length > 0) {
+        return resolve(true);
+      } else {
+        return resolve(false);
+      }
     });
   });
 }
