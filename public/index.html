@@ -1,1 +1,36 @@
-hello
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Magic Pixel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cabin&display=swap" rel="stylesheet">
+    <link rel="stylesheet" media="screen" href="/style.css">
+  </head>
+  <body>
+    <div id="container">
+      <h1>Magic Pixel<sup style="font-size:2rem">beta</sup></h1>
+      <h2 class="subtext">The easiest way to add Cryptocurrency to your Minecraft server</h2>
+
+      <div id="tokens"></div>
+      <a href="https://docs.magicpixel.xyz"><h2 class="homepage-item">Docs</h2></a>
+      <a href="/deposit"><h2 class="homepage-item">Deposit</h2></a>
+      <a href="/withdraw"><h2 class="homepage-item">Withdraw</h2></a>
+    </div>
+
+    <script src="https://unpkg.com/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script>
+    fetch('https://api.magicpixel.xyz/tokens')
+    .then(function(res) {
+      return res.json();
+    })
+    .then(function(res) {
+      console.log(res);
+      for (let m of res) {
+        $(`<div class="token" style="background-image:url(https://tokens.bch.sx/original/${m.id}.png)"></div>`)
+        .appendTo($('#tokens'));
+      }
+    });
+    </script>
+  </body>
+</html>

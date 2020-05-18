@@ -14,6 +14,27 @@ h1 {
   font-weight:bold;
   text-shadow: 3px 3px 10px #424242;
 }
+h2.subtext {
+  font-size: 2rem;
+  margin: 0.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: #fff;
+  font-weight:normal;
+  text-shadow: 3px 3px 10px #424242;
+}
+h2.homepage-item {
+  font-size: 4rem;
+  margin: 0.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: #fff;
+  font-weight:normal;
+  text-shadow: 3px 3px 10px #424242;
+}
+a {
+  text-decoration: none;
+}
 #container {
   text-align: center;
   flex-flow: column;

@@ -21,7 +21,7 @@ curl -X GET "https://api.magicpixel.xyz/servers"
 This will retrieve the `uuid` from Mojang given your Minecraft username. The results are cached for some period of time.
 
 ```bash
-curl -X GET "https://api.magicpixel.xyz/minecraft/lookup_uuid/:username
+curl -X GET "https://api.magicpixel.xyz/minecraft/lookup_uuid/:username"
 ```
 
 
